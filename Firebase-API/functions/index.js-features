@@ -1,0 +1,45 @@
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const express = require('express');
+
+const app = express()
+
+admin.initializeApp({
+    credential: admin.credential.cert('./credentials.json'),
+})
+
+const db = admin.firestore()
+
+app.post('/api/features', async (req, res) => {
+    try {
+      await  db.collection('features')
+      .doc('/' + req.body.phone + '/')
+      .create({
+        activeFeatures: req.body.activeFeatures,
+        phoneNumber: req.body.phone
+    })
+      return res.status(204).json()
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send(error);
+    }
+
+});
+
+app.get('/api/features/:feature_phone', (req, res) => {
+    (async () => {
+        try {
+            const doc = db.collection('features').doc(req.params.feature_phone)
+            const item = await doc.get()
+               const repsonse = item.data()
+               return res.status(200).json(repsonse)
+        } catch (error) {
+            console.log(error);
+            return res
+            .status(500)
+            .send(error);
+        }
+        })();
+});
+
+exports.app = functions.https.onRequest(app);
